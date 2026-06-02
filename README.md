@@ -17,7 +17,7 @@
 pip install -r requirements.txt
 ```
 
-首次使用 ultralytics 的 yolov8n.pt 可能需要联网下载。内网环境请提前下载模型文件放入 models/yolov8n.pt，并修改 config.yaml。
+默认使用 ONNX Runtime 加载 `yolov8n.onnx`。内网环境请提前把 ONNX 模型文件放到程序目录，并确认 `config.yaml` 的 `model.path` 指向该文件。
 
 ## 运行
 

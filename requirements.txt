@@ -1,5 +1,6 @@
 opencv-python
 ultralytics
+onnxruntime
 requests
 numpy
 psutil

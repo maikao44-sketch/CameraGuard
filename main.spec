@@ -13,6 +13,7 @@ a = Analysis(
         'yaml',
         'cv2',
         'ultralytics',
+        'onnxruntime',
         'requests',
         'numpy',
         'psutil',

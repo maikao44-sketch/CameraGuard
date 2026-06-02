@@ -20,6 +20,12 @@ if not exist main.py (
   goto failed
 )
 
+if not exist yolov8n.onnx (
+  echo [错误] 当前目录没有 yolov8n.onnx。请把 ONNX 模型文件放到当前目录后再打包。
+  echo ERROR: yolov8n.onnx not found. >> "%LOG%"
+  goto failed
+)
+
 where py >> "%LOG%" 2>&1
 if %errorlevel%==0 (
     set PYTHON_CMD=py -3
@@ -76,7 +82,7 @@ if exist release rmdir /s /q release >> "%LOG%" 2>&1
 mkdir release >> "%LOG%" 2>&1
 xcopy /e /i /y "dist\CameraGuard" "release\CameraGuard" >> "%LOG%" 2>&1
 copy /y "config.yaml" "release\CameraGuard\config.yaml" >> "%LOG%" 2>&1
-copy /y "yolov8n.pt" "release\CameraGuard\yolov8n.pt" >> "%LOG%" 2>&1
+copy /y "yolov8n.onnx" "release\CameraGuard\yolov8n.onnx" >> "%LOG%" 2>&1
 if not exist "release\CameraGuard\evidence" mkdir "release\CameraGuard\evidence" >> "%LOG%" 2>&1
 if not exist "release\CameraGuard\logs" mkdir "release\CameraGuard\logs" >> "%LOG%" 2>&1
 copy /y "使用说明.txt" "release\CameraGuard\使用说明.txt" >> "%LOG%" 2>&1

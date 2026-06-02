@@ -49,7 +49,7 @@ class DashboardUI:
         self._img_ref = None
         self._thumb_refs = []
         self._build()
-        self.root.after(200, self._refresh)
+        self.root.after(max(16, int(getattr(self.cfg, "ui_update_interval_ms", 80))), self._refresh)
 
     def _build(self):
         # 顶栏
@@ -234,6 +234,36 @@ class DashboardUI:
         box = tk.Frame(win, bg="#142238", highlightbackground="#26384f", highlightthickness=1)
         box.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 20))
 
+        btns = tk.Frame(box, bg="#142238")
+        btns.pack(side=tk.BOTTOM, fill=tk.X, padx=24, pady=14)
+
+        scroll_area = tk.Frame(box, bg="#142238")
+        scroll_area.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        canvas = tk.Canvas(scroll_area, bg="#142238", highlightthickness=0)
+        scrollbar = ttk.Scrollbar(scroll_area, orient=tk.VERTICAL, command=canvas.yview)
+        settings_body = tk.Frame(canvas, bg="#142238")
+        body_window = canvas.create_window((0, 0), window=settings_body, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        def update_scroll_region(_event=None):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+
+        def resize_body(event):
+            canvas.itemconfigure(body_window, width=event.width)
+
+        def on_mousewheel(event):
+            delta = -1 * int(event.delta / 120) if event.delta else 0
+            if delta:
+                canvas.yview_scroll(delta, "units")
+
+        settings_body.bind("<Configure>", update_scroll_region)
+        canvas.bind("<Configure>", resize_body)
+        canvas.bind("<Enter>", lambda _event: canvas.bind_all("<MouseWheel>", on_mousewheel))
+        canvas.bind("<Leave>", lambda _event: canvas.unbind_all("<MouseWheel>"))
+        win.bind("<Destroy>", lambda event: canvas.unbind_all("<MouseWheel>") if event.widget is win else None)
+
         def section(parent, title):
             tk.Label(parent, text=title, fg="#f8fafc", bg="#142238", font=("Microsoft YaHei UI", 13, "bold")).pack(anchor="w", padx=24, pady=(18, 8))
 
@@ -257,30 +287,27 @@ class DashboardUI:
         camera_index_var = tk.StringVar(value=str(getattr(self.cfg, "camera_index", "auto")))
         prefer_front_var = tk.BooleanVar(value=bool(getattr(self.cfg, "camera_prefer_front", True)))
 
-        section(box, "摄像头参数 camera")
-        row(box, "摄像头编号", camera_index_var, "填 auto 默认优先前置；也可填 0、1、2 指定摄像头")
-        chk0 = tk.Checkbutton(box, text="自动模式下优先使用前置/内置摄像头", variable=prefer_front_var, fg="#cbd5e1", bg="#142238", activeforeground="#f8fafc", activebackground="#142238", selectcolor="#0f1b2b", font=("Microsoft YaHei UI", 11))
+        section(settings_body, "摄像头参数 camera")
+        row(settings_body, "摄像头编号", camera_index_var, "填 auto 默认优先前置；也可填 0、1、2 指定摄像头")
+        chk0 = tk.Checkbutton(settings_body, text="自动模式下优先使用前置/内置摄像头", variable=prefer_front_var, fg="#cbd5e1", bg="#142238", activeforeground="#f8fafc", activebackground="#142238", selectcolor="#0f1b2b", font=("Microsoft YaHei UI", 11))
         chk0.pack(anchor="w", padx=24, pady=6)
 
-        section(box, "模型识别参数")
-        row(box, "检测置信度 confidence", confidence_var, "建议 0.25–0.50；越高越严格，越低越灵敏")
+        section(settings_body, "模型识别参数")
+        row(settings_body, "检测置信度 confidence", confidence_var, "建议 0.25–0.50；越高越严格，越低越灵敏")
 
-        section(box, "预警参数 alarm")
-        row(box, "连续触发帧数", threshold_var, "建议 15–30；越小越灵敏")
-        row(box, "冷却时间/秒", cooldown_var, "一次预警后，多少秒内不重复预警")
-        chk1 = tk.Checkbutton(box, text="保存带检测框的留证截图", variable=save_annotated_var, fg="#cbd5e1", bg="#142238", activeforeground="#f8fafc", activebackground="#142238", selectcolor="#0f1b2b", font=("Microsoft YaHei UI", 11))
+        section(settings_body, "预警参数 alarm")
+        row(settings_body, "连续触发帧数", threshold_var, "建议 15–30；越小越灵敏")
+        row(settings_body, "冷却时间/秒", cooldown_var, "一次预警后，多少秒内不重复预警")
+        chk1 = tk.Checkbutton(settings_body, text="保存带检测框的留证截图", variable=save_annotated_var, fg="#cbd5e1", bg="#142238", activeforeground="#f8fafc", activebackground="#142238", selectcolor="#0f1b2b", font=("Microsoft YaHei UI", 11))
         chk1.pack(anchor="w", padx=24, pady=6)
 
-        section(box, "自动锁屏 lock_screen")
-        chk2 = tk.Checkbutton(box, text="检测到疑似手机拍摄后自动锁屏", variable=lock_enable_var, fg="#cbd5e1", bg="#142238", activeforeground="#f8fafc", activebackground="#142238", selectcolor="#0f1b2b", font=("Microsoft YaHei UI", 11))
+        section(settings_body, "自动锁屏 lock_screen")
+        chk2 = tk.Checkbutton(settings_body, text="检测到疑似手机拍摄后自动锁屏", variable=lock_enable_var, fg="#cbd5e1", bg="#142238", activeforeground="#f8fafc", activebackground="#142238", selectcolor="#0f1b2b", font=("Microsoft YaHei UI", 11))
         chk2.pack(anchor="w", padx=24, pady=6)
-        row(box, "锁屏延迟/秒", lock_delay_var, "0 表示留证后立即锁屏")
+        row(settings_body, "锁屏延迟/秒", lock_delay_var, "0 表示留证后立即锁屏")
 
-        info = tk.Label(box, text=f"当前配置文件：{os.path.abspath('config.yaml')}\n留证目录：{getattr(self.cfg, 'evidence_dir', '-')}    日志目录：{getattr(self.cfg, 'log_dir', '-')}", fg="#94a3b8", bg="#142238", justify=tk.LEFT, font=("Microsoft YaHei UI", 9))
-        info.pack(anchor="w", padx=24, pady=(10, 0))
-
-        btns = tk.Frame(box, bg="#142238")
-        btns.pack(fill=tk.X, padx=24, pady=20)
+        info = tk.Label(settings_body, text=f"当前配置文件：{os.path.abspath('config.yaml')}\n留证目录：{getattr(self.cfg, 'evidence_dir', '-')}    日志目录：{getattr(self.cfg, 'log_dir', '-')}", fg="#94a3b8", bg="#142238", justify=tk.LEFT, font=("Microsoft YaHei UI", 9))
+        info.pack(anchor="w", padx=24, pady=(10, 18))
 
         def save_settings():
             try:
@@ -371,7 +398,7 @@ class DashboardUI:
         self.left_info.configure(text=f"运行时长： {h:02d}:{m:02d}:{s:02d}\n摄像头状态： {'正常' if camera_ok else '异常'}\n当前摄像头： {camera_index}\n本机名称： {computer_name or '-'}\n版本号： v1.1.1")
         self._render_events(events)
         self._draw_trend(alarm_count)
-        self.root.after(500, self._refresh)
+        self.root.after(max(16, int(getattr(self.cfg, "ui_update_interval_ms", 80))), self._refresh)
 
     def _set_video(self, frame):
         """刷新实时画面。

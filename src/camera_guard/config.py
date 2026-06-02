@@ -37,11 +37,39 @@ class AppConfig:
 
     @property
     def model_path(self) -> str:
-        return str(self.raw.get("model", {}).get("path", "yolov8n.pt"))
+        return str(self.raw.get("model", {}).get("path", "yolov8n.onnx"))
+
+    @property
+    def model_backend(self) -> str:
+        model = self.raw.get("model", {})
+        backend = model.get("backend")
+        if backend:
+            return str(backend).lower().strip()
+        return "onnx" if self.model_path.lower().endswith(".onnx") else "ultralytics"
 
     @property
     def model_confidence(self) -> float:
         return float(self.raw.get("model", {}).get("confidence", 0.35))
+
+    @property
+    def model_iou_threshold(self) -> float:
+        return float(self.raw.get("model", {}).get("iou_threshold", 0.45))
+
+    @property
+    def model_imgsz(self):
+        return self.raw.get("model", {}).get("imgsz")
+
+    @property
+    def target_fps(self) -> float:
+        return max(1.0, float(self.raw.get("performance", {}).get("target_fps", 10)))
+
+    @property
+    def detect_every_n_frames(self) -> int:
+        return max(1, int(self.raw.get("performance", {}).get("detect_every_n_frames", 3)))
+
+    @property
+    def ui_update_interval_ms(self) -> int:
+        return max(16, int(self.raw.get("performance", {}).get("ui_update_interval_ms", 80)))
 
     @property
     def suspicious_frame_threshold(self) -> int:

@@ -6,8 +6,14 @@ camera:
   height: 720
   show_window: false
 model:
-  path: yolov8n.pt
+  backend: onnx
+  path: yolov8n.onnx
   confidence: 0.35
+  iou_threshold: 0.45
+performance:
+  target_fps: 10
+  detect_every_n_frames: 3
+  ui_update_interval_ms: 80
 alarm:
   suspicious_frame_threshold: 20
   cooldown_seconds: 10

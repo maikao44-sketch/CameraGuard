@@ -17,7 +17,13 @@ from .ui import DashboardUI, RuntimeState
 
 
 def _detection_worker(cfg, state, lock, exit_requested):
-    detector = PhoneDetector(cfg.model_path, cfg.model_confidence)
+    detector = PhoneDetector(
+        cfg.model_path,
+        cfg.model_confidence,
+        backend=cfg.model_backend,
+        iou_threshold=cfg.model_iou_threshold,
+        imgsz=cfg.model_imgsz,
+    )
     alarm_manager = AlarmManager(cfg.evidence_dir, cfg.log_dir)
     reporter = Reporter(cfg.report_enable, cfg.report_url, cfg.report_timeout_seconds)
     lock_screen_manager = LockScreenManager(cfg.lock_screen_enable, cfg.lock_screen_delay_seconds)
@@ -47,8 +53,20 @@ def _detection_worker(cfg, state, lock, exit_requested):
 
     suspicious_count = 0
     last_alarm_time = 0.0
+    frame_index = 0
+    last_result = {
+        "has_person": False,
+        "has_phone": False,
+        "persons": [],
+        "phones": [],
+    }
+    last_suspicious = False
+    last_state_update = 0.0
+    frame_interval = 1.0 / cfg.target_fps
+    ui_update_interval = cfg.ui_update_interval_ms / 1000.0
 
     while not exit_requested.is_set():
+        loop_started = time.time()
         ret, frame = cap.read()
         if not ret:
             with lock:
@@ -58,8 +76,14 @@ def _detection_worker(cfg, state, lock, exit_requested):
 
         height, width = frame.shape[:2]
         detector.confidence = cfg.model_confidence
-        result = detector.detect(frame)
-        suspicious = is_suspicious_phone_recording(result, (width, height), cfg.raw.get("rule", {}))
+        detector.iou_threshold = cfg.model_iou_threshold
+
+        should_detect = frame_index % cfg.detect_every_n_frames == 0
+        if should_detect:
+            last_result = detector.detect(frame)
+            last_suspicious = is_suspicious_phone_recording(last_result, (width, height), cfg.raw.get("rule", {}))
+        result = last_result
+        suspicious = last_suspicious
 
         if suspicious:
             suspicious_count += 1
@@ -82,19 +106,26 @@ def _detection_worker(cfg, state, lock, exit_requested):
                 last_alarm_time = now
             suspicious_count = 0
 
-        with lock:
-            state.latest_frame = display_frame
-            state.latest_result = result
-            state.suspicious = suspicious
-            state.camera_ok = True
-            if event:
-                state.last_event = event
-                state.events.append(event)
-                state.today_alarm_count += 1
-                state.today_evidence_count += 1
-                state.events = state.events[-50:]
+        now = time.time()
+        if event or now - last_state_update >= ui_update_interval:
+            with lock:
+                state.latest_frame = display_frame
+                state.latest_result = result
+                state.suspicious = suspicious
+                state.camera_ok = True
+                if event:
+                    state.last_event = event
+                    state.events.append(event)
+                    state.today_alarm_count += 1
+                    state.today_evidence_count += 1
+                    state.events = state.events[-50:]
+            last_state_update = now
 
-        time.sleep(0.01)
+        frame_index += 1
+        elapsed = time.time() - loop_started
+        sleep_seconds = frame_interval - elapsed
+        if sleep_seconds > 0:
+            time.sleep(sleep_seconds)
 
     cap.release()
     with lock:
