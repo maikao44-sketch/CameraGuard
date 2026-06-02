@@ -1,0 +1,31 @@
+camera:
+  index: auto
+  prefer_front: true
+  probe_max_index: 5
+  width: 1280
+  height: 720
+  show_window: false
+model:
+  path: yolov8n.pt
+  confidence: 0.35
+alarm:
+  suspicious_frame_threshold: 20
+  cooldown_seconds: 10
+  evidence_dir: evidence
+  log_dir: logs
+  save_annotated_image: true
+lock_screen:
+  # 检测到疑似手机拍摄并完成留证后，是否自动锁屏
+  enable: true
+  # 留证后延迟几秒锁屏，0 表示立即锁屏
+  delay_seconds: 0
+report:
+  enable: false
+  url: http://127.0.0.1:8080/api/camera/alarm
+  timeout_seconds: 3
+rule:
+  center_x_min_ratio: 0.25
+  center_x_max_ratio: 0.75
+  center_y_min_ratio: 0.15
+  center_y_max_ratio: 0.85
+  phone_person_distance_ratio: 0.18

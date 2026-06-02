@@ -1,0 +1,12 @@
+opencv-python
+ultralytics
+requests
+numpy
+psutil
+pyyaml
+pillow
+pystray
+pywin32; platform_system == "Windows"
+fastapi
+uvicorn
+python-multipart

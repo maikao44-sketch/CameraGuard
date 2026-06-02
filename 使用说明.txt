@@ -1,0 +1,25 @@
+CameraGuard 摄像头安全预警系统
+
+使用方式：
+1. 双击 CameraGuard.exe 启动程序。
+2. 程序默认在后台运行，可从右下角托盘打开“预警看板”。
+3. 在“系统设置”中可以直接修改以下参数：
+   - 检测置信度 confidence
+   - 连续触发帧数 suspicious_frame_threshold
+   - 告警冷却时间 cooldown_seconds
+   - 是否保存带检测框截图 save_annotated_image
+   - 是否自动锁屏 lock_screen.enable
+   - 锁屏延迟 lock_screen.delay_seconds
+4. 点击“保存设置”后会自动写入 config.yaml，大部分参数会尽快生效。
+5. 如果修改模型文件路径、摄像头编号等基础配置，建议退出程序后重新启动。
+
+注意：
+- 如果开启自动锁屏，检测到疑似手机拍摄后会先截图留证，再触发系统锁屏。
+- 留证图片在 evidence 目录。
+- 预警日志在 logs 目录。
+
+
+摄像头说明：
+- 默认 camera.index=auto，会优先使用前置/内置摄像头。
+- 如果电脑有多个摄像头，可在系统设置里把摄像头编号改成 0、1、2 后重启程序测试。
+- 摄像头编号修改后需要重启 CameraGuard 才会生效。
