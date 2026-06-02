@@ -346,9 +346,10 @@ class DashboardUI:
                 with open("config.yaml", "w", encoding="utf-8") as f:
                     yaml.safe_dump(raw, f, allow_unicode=True, sort_keys=False)
 
-                messagebox.showinfo("保存成功", "系统设置已保存到 config.yaml。摄像头编号修改后需要重启程序生效，其余参数会尽快生效。")
+                messagebox.showinfo("保存成功", "系统设置已保存到 config.yaml。摄像头编号修改后需要重启程序生效，其余参数会尽快生效。", parent=win)
+                win.destroy()
             except Exception as exc:
-                messagebox.showerror("保存失败", str(exc))
+                messagebox.showerror("保存失败", str(exc), parent=win)
 
         tk.Button(btns, text="保存设置", command=save_settings, bg="#1d4ed8", fg="white", relief="flat", padx=22, pady=8, font=("Microsoft YaHei UI", 11, "bold")).pack(side=tk.LEFT)
         tk.Button(btns, text="打开留证目录", command=lambda: self._open_dir(self.cfg.evidence_dir), bg="#334155", fg="white", relief="flat", padx=16, pady=8).pack(side=tk.LEFT, padx=10)
