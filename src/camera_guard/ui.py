@@ -282,8 +282,9 @@ class DashboardUI:
         threshold_var = tk.StringVar(value=str(getattr(self.cfg, "suspicious_frame_threshold", 20)))
         cooldown_var = tk.StringVar(value=str(getattr(self.cfg, "cooldown_seconds", 10)))
         save_annotated_var = tk.BooleanVar(value=bool(getattr(self.cfg, "save_annotated_image", True)))
-        lock_enable_var = tk.BooleanVar(value=bool(getattr(self.cfg, "lock_screen_enable", False)))
         lock_delay_var = tk.StringVar(value=str(getattr(self.cfg, "lock_screen_delay_seconds", 0)))
+        action_value = "shutdown" if bool(getattr(self.cfg, "shutdown_enable", False)) else ("lock" if bool(getattr(self.cfg, "lock_screen_enable", False)) else "none")
+        alarm_action_var = tk.StringVar(value=action_value)
         camera_index_var = tk.StringVar(value=str(getattr(self.cfg, "camera_index", "auto")))
         prefer_front_var = tk.BooleanVar(value=bool(getattr(self.cfg, "camera_prefer_front", True)))
 
@@ -301,10 +302,25 @@ class DashboardUI:
         chk1 = tk.Checkbutton(settings_body, text="保存带检测框的留证截图", variable=save_annotated_var, fg="#cbd5e1", bg="#142238", activeforeground="#f8fafc", activebackground="#142238", selectcolor="#0f1b2b", font=("Microsoft YaHei UI", 11))
         chk1.pack(anchor="w", padx=24, pady=6)
 
-        section(settings_body, "自动锁屏 lock_screen")
-        chk2 = tk.Checkbutton(settings_body, text="检测到疑似手机拍摄后自动锁屏", variable=lock_enable_var, fg="#cbd5e1", bg="#142238", activeforeground="#f8fafc", activebackground="#142238", selectcolor="#0f1b2b", font=("Microsoft YaHei UI", 11))
-        chk2.pack(anchor="w", padx=24, pady=6)
-        row(settings_body, "锁屏延迟/秒", lock_delay_var, "0 表示留证后立即锁屏")
+        section(settings_body, "触发后动作")
+        for text, value in (
+            ("不执行锁屏或关机", "none"),
+            ("截图留证后自动锁屏", "lock"),
+            ("截图留证后自动关机", "shutdown"),
+        ):
+            tk.Radiobutton(
+                settings_body,
+                text=text,
+                variable=alarm_action_var,
+                value=value,
+                fg="#cbd5e1",
+                bg="#142238",
+                activeforeground="#f8fafc",
+                activebackground="#142238",
+                selectcolor="#0f1b2b",
+                font=("Microsoft YaHei UI", 11),
+            ).pack(anchor="w", padx=24, pady=4)
+        row(settings_body, "动作延迟/秒", lock_delay_var, "0 表示留证后立即执行")
 
         info = tk.Label(settings_body, text=f"当前配置文件：{os.path.abspath('config.yaml')}\n留证目录：{getattr(self.cfg, 'evidence_dir', '-')}    日志目录：{getattr(self.cfg, 'log_dir', '-')}", fg="#94a3b8", bg="#142238", justify=tk.LEFT, font=("Microsoft YaHei UI", 9))
         info.pack(anchor="w", padx=24, pady=(10, 18))
@@ -340,8 +356,11 @@ class DashboardUI:
                 raw.setdefault("alarm", {})["suspicious_frame_threshold"] = threshold
                 raw.setdefault("alarm", {})["cooldown_seconds"] = cooldown
                 raw.setdefault("alarm", {})["save_annotated_image"] = bool(save_annotated_var.get())
-                raw.setdefault("lock_screen", {})["enable"] = bool(lock_enable_var.get())
+                selected_action = alarm_action_var.get()
+                raw.setdefault("lock_screen", {})["enable"] = selected_action == "lock"
                 raw.setdefault("lock_screen", {})["delay_seconds"] = lock_delay
+                raw.setdefault("shutdown", {})["enable"] = selected_action == "shutdown"
+                raw.setdefault("shutdown", {})["delay_seconds"] = lock_delay
 
                 with open("config.yaml", "w", encoding="utf-8") as f:
                     yaml.safe_dump(raw, f, allow_unicode=True, sort_keys=False)

@@ -25,6 +25,14 @@ lock_screen:
   enable: true
   # 留证后延迟几秒锁屏，0 表示立即锁屏
   delay_seconds: 0
+shutdown:
+  # 检测到疑似手机拍摄并完成留证后，是否自动关机
+  enable: false
+  # 留证后延迟几秒关机，0 表示立即关机
+  delay_seconds: 0
+license:
+  # 首次启动留空，输入正确授权码后会自动写入授权摘要
+  code_hash: ''
 report:
   enable: false
   url: http://127.0.0.1:8080/api/camera/alarm

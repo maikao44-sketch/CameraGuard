@@ -10,6 +10,8 @@ from .drawing import draw_detection
 from .alarm import AlarmManager
 from .reporter import Reporter
 from .lock_screen import LockScreenManager
+from .system_action import ShutdownManager
+from .license import ensure_authorized
 from .camera_audit import list_camera_related_processes
 from .camera_selector import select_camera_index
 from .tray import TrayManager
@@ -27,6 +29,7 @@ def _detection_worker(cfg, state, lock, exit_requested):
     alarm_manager = AlarmManager(cfg.evidence_dir, cfg.log_dir)
     reporter = Reporter(cfg.report_enable, cfg.report_url, cfg.report_timeout_seconds)
     lock_screen_manager = LockScreenManager(cfg.lock_screen_enable, cfg.lock_screen_delay_seconds)
+    shutdown_manager = ShutdownManager(cfg.shutdown_enable, cfg.shutdown_delay_seconds)
 
     selected_camera_index = select_camera_index(cfg.camera_index, cfg.camera_prefer_front, cfg.camera_probe_max_index)
     with lock:
@@ -102,7 +105,12 @@ def _detection_worker(cfg, state, lock, exit_requested):
                 reporter.report(event)
                 lock_screen_manager.enable = cfg.lock_screen_enable
                 lock_screen_manager.delay_seconds = cfg.lock_screen_delay_seconds
-                lock_screen_manager.trigger()
+                shutdown_manager.enable = cfg.shutdown_enable
+                shutdown_manager.delay_seconds = cfg.shutdown_delay_seconds
+                if cfg.shutdown_enable:
+                    shutdown_manager.trigger()
+                else:
+                    lock_screen_manager.trigger()
                 last_alarm_time = now
             suspicious_count = 0
 
@@ -133,7 +141,11 @@ def _detection_worker(cfg, state, lock, exit_requested):
 
 
 def main():
-    cfg = load_config("config.yaml")
+    config_path = "config.yaml"
+    cfg = load_config(config_path)
+    if not ensure_authorized(cfg, config_path):
+        print("授权失败，程序已退出。")
+        return
     state = RuntimeState(computer_name=socket.gethostname())
     lock = threading.Lock()
     exit_requested = threading.Event()

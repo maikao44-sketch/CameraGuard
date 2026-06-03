@@ -17,11 +17,11 @@ class PhoneDetector:
         self,
         model_path: str,
         confidence: float = 0.35,
-        backend: str = "ultralytics",
+        backend: str = "onnx",
         iou_threshold: float = 0.45,
         imgsz: Any = None,
     ):
-        self.backend = (backend or "ultralytics").lower().strip()
+        self.backend = (backend or "onnx").lower().strip()
         self.confidence = confidence
         self.iou_threshold = iou_threshold
         self.imgsz = imgsz

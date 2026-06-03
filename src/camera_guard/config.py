@@ -100,6 +100,18 @@ class AppConfig:
         return float(self.raw.get("lock_screen", {}).get("delay_seconds", 0))
 
     @property
+    def shutdown_enable(self) -> bool:
+        return bool(self.raw.get("shutdown", {}).get("enable", False))
+
+    @property
+    def shutdown_delay_seconds(self) -> float:
+        return float(self.raw.get("shutdown", {}).get("delay_seconds", 0))
+
+    @property
+    def license_code_hash(self) -> str:
+        return str(self.raw.get("license", {}).get("code_hash", ""))
+
+    @property
     def report_enable(self) -> bool:
         return bool(self.raw.get("report", {}).get("enable", False))
 

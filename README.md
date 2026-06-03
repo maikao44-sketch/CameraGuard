@@ -19,6 +19,12 @@ pip install -r requirements.txt
 
 默认使用 ONNX Runtime 加载 `yolov8n.onnx`。内网环境请提前把 ONNX 模型文件放到程序目录，并确认 `config.yaml` 的 `model.path` 指向该文件。
 
+报送接口 demo 单独安装：
+
+```bash
+pip install -r requirements-demo.txt
+```
+
 ## 运行
 
 ```bash

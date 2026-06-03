@@ -1,5 +1,4 @@
 opencv-python
-ultralytics
 onnxruntime
 requests
 numpy
@@ -8,6 +7,3 @@ pyyaml
 pillow
 pystray
 pywin32; platform_system == "Windows"
-fastapi
-uvicorn
-python-multipart
