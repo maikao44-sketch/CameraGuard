@@ -13,7 +13,8 @@ def b64url(data: bytes) -> str:
 
 def main():
     parser = argparse.ArgumentParser(description="Generate a CameraGuard machine-bound license code.")
-    parser.add_argument("machine_code", help="Machine code shown by CameraGuard.")
+    parser.add_argument("machine_code", nargs="?", help="Machine code shown by CameraGuard.")
+    parser.add_argument("--machine-code", "--machine_code", dest="machine_code_option", help="Machine code shown by CameraGuard.")
     parser.add_argument("--customer", default="", help="Optional customer name.")
     parser.add_argument("--expires", default="", help="Optional expiry date, YYYY-MM-DD.")
     parser.add_argument("--private-key", default="license_private_key.pem", help="RSA private key PEM path.")
@@ -22,8 +23,12 @@ def main():
     if args.expires:
         date.fromisoformat(args.expires)
 
+    machine_code = (args.machine_code_option or args.machine_code or "").strip().upper()
+    if not machine_code:
+        parser.error("machine_code is required")
+
     payload = {
-        "machine_code": args.machine_code.strip().upper(),
+        "machine_code": machine_code,
         "customer": args.customer.strip(),
         "expires": args.expires.strip(),
     }

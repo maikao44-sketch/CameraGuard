@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CameraGuard 授权码生成器</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Microsoft YaHei UI", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f6f8;
+      color: #172033;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    main {
+      width: min(980px, calc(100vw - 32px));
+      margin: 32px auto;
+      background: #ffffff;
+      border: 1px solid #d8dee8;
+      border-radius: 8px;
+      box-shadow: 0 12px 30px rgba(23, 32, 51, 0.08);
+      overflow: hidden;
+    }
+    header {
+      padding: 22px 28px;
+      background: #172033;
+      color: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .sub {
+      margin-top: 6px;
+      color: #cbd5e1;
+      font-size: 13px;
+    }
+    section {
+      padding: 24px 28px;
+      border-top: 1px solid #edf0f5;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: #263244;
+    }
+    input, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 11px 12px;
+      font: inherit;
+      color: #111827;
+      background: #ffffff;
+    }
+    textarea {
+      min-height: 150px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .field {
+      margin-bottom: 18px;
+    }
+    .hint {
+      margin-top: 6px;
+      color: #64748b;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    button {
+      border: 0;
+      border-radius: 6px;
+      padding: 11px 18px;
+      background: #1d4ed8;
+      color: white;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #475569;
+    }
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+    #licenseCode {
+      min-height: 180px;
+    }
+    .status {
+      min-height: 20px;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #166534;
+    }
+    .error {
+      color: #b91c1c;
+    }
+    @media (max-width: 760px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      main {
+        margin: 16px auto;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>CameraGuard 授权码生成器</h1>
+    <div class="sub">本页面离线运行。私钥只在当前浏览器内用于签名，不会写入授权码，也不会上传。</div>
+  </header>
+
+  <section>
+    <div class="field">
+      <label for="privateKeyFile">私钥文件 license_private_key.pem</label>
+      <input id="privateKeyFile" type="file" accept=".pem,.key,text/plain">
+      <div class="hint">也可以直接把私钥 PEM 内容粘贴到下方文本框。</div>
+    </div>
+
+    <div class="field">
+      <label for="privateKey">私钥内容</label>
+      <textarea id="privateKey" spellcheck="false" placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"></textarea>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid">
+      <div class="field">
+        <label for="machineCode">机器码</label>
+        <input id="machineCode" placeholder="例如 BB32-66F7-869E-E7DC-C25E">
+      </div>
+      <div class="field">
+        <label for="expires">到期日期</label>
+        <input id="expires" type="date" value="2027-12-31">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="customer">客户名称</label>
+      <input id="customer" placeholder="可留空">
+    </div>
+
+    <div class="actions">
+      <button id="generateBtn">生成授权码</button>
+      <button id="copyBtn" class="secondary" disabled>复制授权码</button>
+    </div>
+    <div id="status" class="status"></div>
+  </section>
+
+  <section>
+    <div class="field">
+      <label for="licenseCode">授权码</label>
+      <textarea id="licenseCode" readonly spellcheck="false"></textarea>
+      <div class="hint">把整段授权码发给用户。新版程序会自动忽略复制时产生的空格和换行。</div>
+    </div>
+  </section>
+</main>
+
+<script>
+  const privateKeyFile = document.getElementById("privateKeyFile");
+  const privateKeyInput = document.getElementById("privateKey");
+  const machineCodeInput = document.getElementById("machineCode");
+  const expiresInput = document.getElementById("expires");
+  const customerInput = document.getElementById("customer");
+  const generateBtn = document.getElementById("generateBtn");
+  const copyBtn = document.getElementById("copyBtn");
+  const licenseCodeOutput = document.getElementById("licenseCode");
+  const statusText = document.getElementById("status");
+
+  privateKeyFile.addEventListener("change", async () => {
+    const file = privateKeyFile.files && privateKeyFile.files[0];
+    if (!file) return;
+    privateKeyInput.value = await file.text();
+  });
+
+  generateBtn.addEventListener("click", async () => {
+    setStatus("");
+    licenseCodeOutput.value = "";
+    copyBtn.disabled = true;
+
+    try {
+      const machineCode = machineCodeInput.value.trim().toUpperCase();
+      const expires = expiresInput.value.trim();
+      if (!machineCode) throw new Error("请输入机器码。");
+      if (expires && !/^\d{4}-\d{2}-\d{2}$/.test(expires)) throw new Error("到期日期格式应为 YYYY-MM-DD。");
+
+      const payload = {
+        customer: customerInput.value.trim(),
+        expires,
+        machine_code: machineCode,
+      };
+      const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
+      const privateKey = await importPrivateKey(privateKeyInput.value);
+      const signature = await crypto.subtle.sign(
+        { name: "RSASSA-PKCS1-v1_5" },
+        privateKey,
+        payloadBytes
+      );
+      const code = `${base64url(payloadBytes)}.${base64url(new Uint8Array(signature))}`;
+      licenseCodeOutput.value = code;
+      copyBtn.disabled = false;
+      setStatus("授权码已生成。");
+    } catch (error) {
+      setStatus(error.message || String(error), true);
+    }
+  });
+
+  copyBtn.addEventListener("click", async () => {
+    if (!licenseCodeOutput.value) return;
+    await navigator.clipboard.writeText(licenseCodeOutput.value);
+    setStatus("授权码已复制到剪贴板。");
+  });
+
+  async function importPrivateKey(pem) {
+    const normalized = pem.trim();
+    if (!normalized) throw new Error("请选择或粘贴私钥文件。");
+    const body = normalized
+      .replace(/-----BEGIN [^-]+-----/g, "")
+      .replace(/-----END [^-]+-----/g, "")
+      .replace(/\s+/g, "");
+    const der = base64ToArrayBuffer(body);
+    try {
+      return await crypto.subtle.importKey(
+        "pkcs8",
+        der,
+        { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+        false,
+        ["sign"]
+      );
+    } catch (error) {
+      throw new Error("私钥无法导入，请确认使用的是 PKCS#8 格式的 RSA 私钥。");
+    }
+  }
+
+  function base64ToArrayBuffer(base64) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
+
+  function base64url(bytes) {
+    let binary = "";
+    for (const byte of bytes) {
+      binary += String.fromCharCode(byte);
+    }
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  }
+
+  function setStatus(message, isError = false) {
+    statusText.textContent = message;
+    statusText.className = isError ? "status error" : "status";
+  }
+</script>
+</body>
+</html>

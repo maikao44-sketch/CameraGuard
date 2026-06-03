@@ -33,6 +33,8 @@ pip install -r requirements-demo.txt
 python tools/generate_license.py XXXX-XXXX-XXXX-XXXX-XXXX --customer "客户名称" --expires 2027-12-31
 ```
 
+也可以直接用浏览器打开 `tools/license_generator.html`，选择 `license_private_key.pem` 后生成授权码。
+
 `license_private_key.pem` 只保存在管理员本机，不要提交或发送给客户。
 
 ## 运行
