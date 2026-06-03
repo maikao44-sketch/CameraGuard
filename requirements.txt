@@ -1,5 +1,6 @@
 opencv-python
 onnxruntime
+cryptography
 requests
 numpy
 psutil

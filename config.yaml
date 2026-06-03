@@ -31,8 +31,8 @@ shutdown:
   # 留证后延迟几秒关机，0 表示立即关机
   delay_seconds: 0
 license:
-  # 首次启动留空，输入正确授权码后会自动写入授权摘要
-  code_hash: ''
+  # 首次启动留空，输入正确授权码后会自动写入
+  code: ''
 report:
   enable: false
   url: http://127.0.0.1:8080/api/camera/alarm

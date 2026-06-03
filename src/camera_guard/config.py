@@ -108,8 +108,8 @@ class AppConfig:
         return float(self.raw.get("shutdown", {}).get("delay_seconds", 0))
 
     @property
-    def license_code_hash(self) -> str:
-        return str(self.raw.get("license", {}).get("code_hash", ""))
+    def license_code(self) -> str:
+        return str(self.raw.get("license", {}).get("code", ""))
 
     @property
     def report_enable(self) -> bool:

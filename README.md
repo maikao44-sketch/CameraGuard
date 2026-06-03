@@ -25,6 +25,16 @@ pip install -r requirements.txt
 pip install -r requirements-demo.txt
 ```
 
+## 授权码
+
+首次启动时，程序会显示本机机器码。管理员使用本地私钥生成机器绑定授权码：
+
+```bash
+python tools/generate_license.py XXXX-XXXX-XXXX-XXXX-XXXX --customer "客户名称" --expires 2027-12-31
+```
+
+`license_private_key.pem` 只保存在管理员本机，不要提交或发送给客户。
+
 ## 运行
 
 ```bash
