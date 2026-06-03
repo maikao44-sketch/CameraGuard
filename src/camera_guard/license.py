@@ -29,6 +29,10 @@ def _b64url_decode(value: str) -> bytes:
     return base64.urlsafe_b64decode(value + ("=" * padding_len))
 
 
+def normalize_license_code(license_code: str) -> str:
+    return "".join(str(license_code or "").split())
+
+
 def _windows_machine_guid() -> str:
     if platform.system().lower() != "windows":
         return ""
@@ -56,7 +60,7 @@ def get_machine_code() -> str:
 
 def verify_license_code(license_code: str, machine_code: str):
     try:
-        payload_part, signature_part = (license_code or "").strip().split(".", 1)
+        payload_part, signature_part = normalize_license_code(license_code).split(".", 1)
         payload_bytes = _b64url_decode(payload_part)
         signature = _b64url_decode(signature_part)
         public_key = serialization.load_pem_public_key(PUBLIC_KEY_PEM)
@@ -80,7 +84,7 @@ def verify_license_code(license_code: str, machine_code: str):
 
 
 def has_valid_activation(license_cfg, machine_code: str) -> bool:
-    license_code = str(license_cfg.get("code", "") or "").strip()
+    license_code = normalize_license_code(license_cfg.get("code", ""))
     if not license_code:
         return False
     ok, _ = verify_license_code(license_code, machine_code)
@@ -113,7 +117,7 @@ def ensure_authorized(cfg, config_path: str = "config.yaml") -> bool:
                 return False
             ok, info = verify_license_code(entered, machine_code)
             if ok:
-                cfg.raw["license"] = {"code": entered.strip()}
+                cfg.raw["license"] = {"code": normalize_license_code(entered)}
                 with open(config_path, "w", encoding="utf-8") as f:
                     yaml.safe_dump(cfg.raw, f, allow_unicode=True, sort_keys=False)
                 return True
