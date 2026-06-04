@@ -61,15 +61,15 @@ class AppConfig:
 
     @property
     def target_fps(self) -> float:
-        return max(1.0, float(self.raw.get("performance", {}).get("target_fps", 10)))
+        return max(1.0, float(self.raw.get("performance", {}).get("target_fps", 8)))
 
     @property
     def detect_every_n_frames(self) -> int:
-        return max(1, int(self.raw.get("performance", {}).get("detect_every_n_frames", 3)))
+        return max(1, int(self.raw.get("performance", {}).get("detect_every_n_frames", 5)))
 
     @property
     def ui_update_interval_ms(self) -> int:
-        return max(16, int(self.raw.get("performance", {}).get("ui_update_interval_ms", 80)))
+        return max(16, int(self.raw.get("performance", {}).get("ui_update_interval_ms", 150)))
 
     @property
     def suspicious_frame_threshold(self) -> int:

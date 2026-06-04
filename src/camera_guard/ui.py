@@ -282,6 +282,10 @@ class DashboardUI:
         threshold_var = tk.StringVar(value=str(getattr(self.cfg, "suspicious_frame_threshold", 20)))
         cooldown_var = tk.StringVar(value=str(getattr(self.cfg, "cooldown_seconds", 10)))
         save_annotated_var = tk.BooleanVar(value=bool(getattr(self.cfg, "save_annotated_image", True)))
+        current_target_fps = float(getattr(self.cfg, "target_fps", 8))
+        current_detect_every = max(1, int(getattr(self.cfg, "detect_every_n_frames", 5)))
+        detect_frequency_var = tk.StringVar(value=f"{current_target_fps / current_detect_every:.2f}")
+        ui_interval_var = tk.StringVar(value=str(getattr(self.cfg, "ui_update_interval_ms", 150)))
         lock_delay_var = tk.StringVar(value=str(getattr(self.cfg, "lock_screen_delay_seconds", 0)))
         action_value = "shutdown" if bool(getattr(self.cfg, "shutdown_enable", False)) else ("lock" if bool(getattr(self.cfg, "lock_screen_enable", False)) else "none")
         alarm_action_var = tk.StringVar(value=action_value)
@@ -301,6 +305,10 @@ class DashboardUI:
         row(settings_body, "冷却时间/秒", cooldown_var, "一次预警后，多少秒内不重复预警")
         chk1 = tk.Checkbutton(settings_body, text="保存带检测框的留证截图", variable=save_annotated_var, fg="#cbd5e1", bg="#142238", activeforeground="#f8fafc", activebackground="#142238", selectcolor="#0f1b2b", font=("Microsoft YaHei UI", 11))
         chk1.pack(anchor="w", padx=24, pady=6)
+
+        section(settings_body, "性能参数 performance")
+        row(settings_body, "检测频率/秒", detect_frequency_var, "老电脑建议 1–2；数值越低越省 CPU")
+        row(settings_body, "界面刷新间隔/ms", ui_interval_var, "老电脑建议 150–300；数值越大界面越省资源")
 
         section(settings_body, "触发后动作")
         for text, value in (
@@ -349,6 +357,17 @@ class DashboardUI:
                 if lock_delay < 0 or lock_delay > 60:
                     raise ValueError("锁屏延迟建议设置在 0 到 60 秒之间")
 
+                detect_frequency = float(detect_frequency_var.get().strip())
+                if detect_frequency < 0.2 or detect_frequency > 10:
+                    raise ValueError("检测频率建议设置在 0.2 到 10 次/秒之间")
+
+                target_fps = max(5.0, min(12.0, detect_frequency * 5))
+                detect_every = max(1, int(round(target_fps / detect_frequency)))
+
+                ui_interval = int(ui_interval_var.get().strip())
+                if ui_interval < 16 or ui_interval > 2000:
+                    raise ValueError("界面刷新间隔建议设置在 16 到 2000 毫秒之间")
+
                 raw = self.cfg.raw
                 raw.setdefault("camera", {})["index"] = camera_index_value
                 raw.setdefault("camera", {})["prefer_front"] = bool(prefer_front_var.get())
@@ -356,6 +375,9 @@ class DashboardUI:
                 raw.setdefault("alarm", {})["suspicious_frame_threshold"] = threshold
                 raw.setdefault("alarm", {})["cooldown_seconds"] = cooldown
                 raw.setdefault("alarm", {})["save_annotated_image"] = bool(save_annotated_var.get())
+                raw.setdefault("performance", {})["target_fps"] = target_fps
+                raw.setdefault("performance", {})["detect_every_n_frames"] = detect_every
+                raw.setdefault("performance", {})["ui_update_interval_ms"] = ui_interval
                 selected_action = alarm_action_var.get()
                 raw.setdefault("lock_screen", {})["enable"] = selected_action == "lock"
                 raw.setdefault("lock_screen", {})["delay_seconds"] = lock_delay

@@ -65,11 +65,11 @@ def _detection_worker(cfg, state, lock, exit_requested):
     }
     last_suspicious = False
     last_state_update = 0.0
-    frame_interval = 1.0 / cfg.target_fps
-    ui_update_interval = cfg.ui_update_interval_ms / 1000.0
 
     while not exit_requested.is_set():
         loop_started = time.time()
+        frame_interval = 1.0 / cfg.target_fps
+        ui_update_interval = cfg.ui_update_interval_ms / 1000.0
         ret, frame = cap.read()
         if not ret:
             with lock:

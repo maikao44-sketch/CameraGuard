@@ -11,9 +11,9 @@ model:
   confidence: 0.35
   iou_threshold: 0.45
 performance:
-  target_fps: 10
-  detect_every_n_frames: 3
-  ui_update_interval_ms: 80
+  target_fps: 8
+  detect_every_n_frames: 5
+  ui_update_interval_ms: 150
 alarm:
   suspicious_frame_threshold: 20
   cooldown_seconds: 10
